@@ -2,11 +2,7 @@
 title: 'Historical Phoneme Error Rates on the TIMIT corpus'
 author: "Sami Kallinen \\@sakalli"
 date: "August 21, 2016"
-output: 
-  html_document:
-    toc: true
-  md_document:
-    toc: true
+output: html_document
 
 ---
 
