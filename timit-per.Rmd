@@ -1,0 +1,98 @@
+---
+title: 'Historical Phoneme Error Rates on the TIMIT corpus'
+author: "Sami Kallinen \\@sakalli"
+date: "August 21, 2016"
+output: html_document
+---
+
+
+**MACHINE LEARNING** | **SPEECH RECOGNITION** | **DEEP LEARNING**
+
+This is a simple excersize to illustrate the advances in machine learning regarding speech recognition. The TIMIT corpus was chosen as it was first published in 1988 and therefore there is some historical data to compare to.
+
+```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE, error=FALSE}
+# load libraries -----------------------------------------------------
+library(googlesheets)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(plotly)
+library(knitr)
+
+```
+The data has been manually collected in an open [spreadsheet](https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw/pubhtml). The phoneme error rates on the TIMIT corpus have been collected from the following three sources: *Lopes & Perdigao 2011*, ["the wer are we" github repo](https://github.com/syhw/wer_are_we) and *Mohaed, Dahl & Hinton, 2011*. Feel free to improve and correct the data.
+
+```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE, error=FALSE}
+
+# load spreasheet to R ----------------------------------------------
+ss <- gs_url("https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw/pubhtml", lookup = FALSE)
+sheet <-  ss %>% gs_read()
+
+# Splitting the Methods variable into separate 
+# rows and then factorize it.
+speech_recognition <- separate_rows(sheet, `Methods`, sep = ", ")
+speech_recognition$Methods <- speech_recognition$Methods %>% as.factor
+speech_recognition$Papers <- speech_recognition$Papers %>% as.factor
+
+# Finding best PERs historically ------------------------------------
+get_best_per <- function(x){
+  x$change = 0
+  min_diff <- -1
+  x <- x %>%
+    arrange(Year,desc(PER))
+  while(min_diff < 0) {
+    x <- x %>% 
+      filter(change >= 0) %>%
+      mutate(change = lag(PER)-PER) %>%
+      mutate(change =ifelse(is.na(change),0,change))
+    min_diff <- x$change %>% min
+  }
+  
+  x <- x %>% group_by(Year) %>% summarize(PER = min(PER))
+  x
+}
+
+
+# Constructing the data to plot the line
+best_per <- speech_recognition %>% 
+  get_best_per %>% 
+  rename(best_per = PER)
+# fill empty years
+fill_years <- data.frame(Year=1989:2016, best_per=0)
+
+best_per <- bind_rows(best_per, fill_years)
+
+best_per <- best_per %>% 
+  group_by(Year) %>%
+  summarize(best_per = max(best_per)) %>% 
+  mutate(best_per = ifelse(best_per==0, NA, best_per), 
+         best_per = zoo::na.locf(best_per)) %>%
+  arrange(Year)
+
+```
+
+Here is a plot of the data, the dotted line shows what is the best error rates reached by year:
+
+```{r echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
+
+gg <- ggplot(speech_recognition, aes(Year, PER, color=Methods)) + 
+  geom_point(position = position_jitter(w = 0.3, h = 0.3), aes(shape=Papers)) +
+  geom_line(data=best_per, aes(Year, best_per), color="gray40", linetype="dotted") +
+  ylab("Phoneme Error Rate") +
+  theme(legend.position = "none") +
+  ggtitle("Phoneme Error Rate development on TIMIT corpus")
+
+ggplotly(gg)
+
+```
+
+You can clearly see the advance that the famous Graves paper resulted in 2012. A table with the current data can be seen below. There are many aspects to improve in the data and this presentation. Feel free to contribute. The code can be found on this [Github repo](https://github.com/skallinen/timit-phoneme-error-rates) and the link to the google spreadsheet with the data can be found [here.](https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw/pubhtml)
+
+
+```{r echo=FALSE}
+
+
+
+kable(sheet, format = "markdown")
+
+```
