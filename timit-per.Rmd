@@ -20,7 +20,7 @@ library(plotly)
 library(knitr)
 
 ```
-The data has been manually collected in an open [spreadsheet](https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw/pubhtml). The phoneme error rates on the TIMIT corpus have been collected from the following three sources: *Lopes & Perdigao 2011*, ["the wer are we" github repo](https://github.com/syhw/wer_are_we) and *Mohaed, Dahl & Hinton, 2011*. Feel free to improve and correct the data.
+The data has been manually collected in an open [spreadsheet](https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw). The phoneme error rates on the TIMIT corpus have been collected from the following three sources: *Lopes & Perdigao 2011*, ["the wer are we" github repo](https://github.com/syhw/wer_are_we) and *Mohaed, Dahl & Hinton, 2011*. Feel free to improve and correct the data.
 
 ```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE, error=FALSE}
 
@@ -86,7 +86,7 @@ ggplotly(gg)
 
 ```
 
-You can clearly see the advance that the famous Graves paper resulted in 2012. A table with the current data can be seen below. There are many aspects to improve in the data and this presentation. Feel free to contribute. The code can be found on this [Github repo](https://github.com/skallinen/timit-phoneme-error-rates) and the link to the google spreadsheet with the data can be found [here.](https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw/pubhtml)
+You can clearly see the advance that the famous Graves paper resulted in 2012. A table with the current data can be seen below. There are many aspects to improve in the data and this presentation. Feel free to contribute. The code can be found on this [Github repo](https://github.com/skallinen/timit-phoneme-error-rates) and the link to the google spreadsheet with the data can be found [here.](https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw)
 
 
 ```{r echo=FALSE}
