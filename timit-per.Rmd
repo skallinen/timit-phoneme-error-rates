@@ -1,5 +1,5 @@
 ---
-title: 'Historical Phoneme Error Rates on the TIMIT corpus'
+title: 'Historical Error Rates in voice and image recognition'
 author: "Sami Kallinen \\@sakalli"
 date: "August 21, 2016"
 output: html_document
@@ -7,9 +7,11 @@ output: html_document
 ---
 
 
-**MACHINE LEARNING** | **SPEECH RECOGNITION** | **DEEP LEARNING**
+**MACHINE LEARNING** | **SPEECH RECOGNITION** | **IMAGE RECOGNITION** | **DEEP LEARNING**
 
-This is a simple excersize to illustrate the advances in machine learning regarding speech recognition. The TIMIT corpus was chosen as it was first published in 1988 and therefore there is some historical data to compare to.
+### Historical Phoneme Error Rates on the TIMIT corpus
+
+This is a simple excersize to illustrate the advances in machine learning regarding speech recognition. The TIMIT corpus was chosen as it was first published in 1988 and therefore there is some historical data to compare to. Yet, I could be argued that neither PER nor the TIMIT corpus is a optimal way to measure the development of the methods and techniques, yet the clear advantage is that we have material from the end of the eighties.
 
 ```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE, error=FALSE}
 # load libraries -----------------------------------------------------
@@ -19,7 +21,9 @@ library(ggplot2)
 library(tidyr)
 library(plotly)
 library(knitr)
+library(lubridate)
 
+setwd("~/R Scripts/timit-per/")
 ```
 The data has been manually collected in an open [spreadsheet](https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw). The phoneme error rates on the TIMIT corpus have been collected from the following three sources: *Lopes & Perdigao 2011*, ["the wer are we" github repo](https://github.com/syhw/wer_are_we) and *Mohaed, Dahl & Hinton, 2011*. Feel free to improve and correct the data.
 
@@ -27,11 +31,11 @@ The data has been manually collected in an open [spreadsheet](https://docs.googl
 
 # load spreasheet to R ----------------------------------------------
 ss <- gs_url("https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw/pubhtml", lookup = FALSE)
-sheet <-  ss %>% gs_read()
-
+sheet_timit <-  ss %>% gs_read(ws="TIMIT")
+sheet_imagenet <-  ss %>% gs_read(ws="IMAGENET")
 # Splitting the Methods variable into separate 
 # rows and then factorize it.
-speech_recognition <- separate_rows(sheet, `Methods`, sep = ", ")
+speech_recognition <- separate_rows(sheet_timit, `Methods`, sep = ", ")
 speech_recognition$Methods <- speech_recognition$Methods %>% as.factor
 speech_recognition$Papers <- speech_recognition$Papers %>% as.factor
 
@@ -54,21 +58,10 @@ get_best_per <- function(x){
 }
 
 
-# Constructing the data to plot the line
+# Finding the historical best results
 best_per <- speech_recognition %>% 
   get_best_per %>% 
   rename(best_per = PER)
-# fill empty years
-fill_years <- data.frame(Year=1989:2016, best_per=0)
-
-best_per <- bind_rows(best_per, fill_years)
-
-best_per <- best_per %>% 
-  group_by(Year) %>%
-  summarize(best_per = max(best_per)) %>% 
-  mutate(best_per = ifelse(best_per==0, NA, best_per), 
-         best_per = zoo::na.locf(best_per)) %>%
-  arrange(Year)
 
 ```
 
@@ -76,24 +69,62 @@ Here is a plot of the data, the dotted line shows what is the best error rates r
 
 ```{r echo=FALSE, warning=FALSE, error=FALSE, message=FALSE}
 
-gg <- ggplot(speech_recognition, aes(Year, PER, color=Methods)) + 
+plot_sr <- ggplot(speech_recognition, aes(Year, PER, color=Methods)) + 
   geom_point(position = position_jitter(w = 0.3, h = 0.3), aes(shape=Papers)) +
-  geom_line(data=best_per, aes(Year, best_per), color="gray40", linetype="dotted") +
+  geom_step(data=best_per, aes(Year, best_per), color="gray40", linetype="dotted") +
   ylab("Phoneme Error Rate") +
   theme(legend.position = "none") +
   ggtitle("Phoneme Error Rate development on TIMIT corpus")
 
-ggplotly(gg)
+ggplotly(plot_sr)
 
 ```
 
-You can clearly see the advance that the famous Graves paper resulted in 2012. A table with the current data can be seen below. There are many aspects to improve in the data and this presentation. Feel free to contribute. The code can be found on this [Github repo](https://github.com/skallinen/timit-phoneme-error-rates) and the link to the google spreadsheet with the data can be found [here.](https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw)
+You can clearly see the advance that the famous Graves paper resulted in 2012. 
+
+### Historical Error Rates of Winning Entries in the Imagenet Competition
+
+"The ImageNet project is a large visual database designed for use in visual object recognition software research. /.../ Since 2010, the annual Imagenet Large Scale Visual Recognition Challenge (ILSVCR) is a competition where research teams submit programs that classify and detect objects and scenes." - Wikipedia
+
+Below we plot the error rate development of the winning entries in the ILSVCR competition.
+
 
 
 ```{r echo=FALSE}
+image_recognition <- sheet_imagenet %>% mutate(Researchers = paste0(Authors, ", ", Institution), Error = Error*100)
+image_recognition$Method <- image_recognition$Method %>% as.factor 
+image_recognition$Researchers <- image_recognition$Researchers %>% as.factor 
+
+plot_ir <- ggplot(image_recognition, aes(Year, Error)) +
+  geom_step(color="gray40", linetype="dotted") +
+  geom_point(aes(color = Method, shape=Researchers)) +
+  ylim(0,NA) +
+  ylab("Error Rate") +
+  theme(legend.position = "none") +
+  ggtitle("Error Rate Imagenet Image Classificcation Contest")
 
 
+ggplotly(plot_ir)
 
-kable(sheet, format = "markdown")
+```
+
+Here the introduction of deep convolutional neural networks in 2012 showed a massive drop of error rate from 25 % to 15 %. The furher development of deep learning has showed a considerable drop in the rates during the successive years.
+
+Two tables with the data used above can be seen below. This is a scratch of the surface and there are many aspects to improve in the data and this presentation. Feel free to contribute. The code can be found on this [Github repo](https://github.com/skallinen/timit-phoneme-error-rates) and the link to the google spreadsheet with the data can be found [here.](https://docs.google.com/spreadsheets/d/1_AjakTpWBPsHc3DGdV3h8p65QYEY6EE9gqkwiHeOdUw)
+
+The Imagenet result data:
+```{r echo=FALSE}
+
+
+kable(sheet_imagenet, format = "markdown")
+
+
+```
+The TIMIT result data:
+```{r echo=FALSE}
+
+
+kable(sheet_timit, format = "markdown")
+
 
 ```
